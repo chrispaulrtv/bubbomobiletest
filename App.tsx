@@ -168,15 +168,35 @@ function App(): React.JSX.Element {
   const handleDeleteBook = async item => {
     console.log('🚀 ~ handleDeleteBook ~ selectedBook:', item);
     try {
-      const response = await axios.delete(`${urlApi}/books/${item.id}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      Alert.alert(
+        'Eliminar Libro',
+        '¿Estás seguro de eliminar el libro?',
+        [
+          {
+            text: 'Cancelar',
+            onPress: () => console.log('Cancel Pressed'),
+            style: 'cancel',
+          },
+          {
+            text: 'OK',
+            onPress: async () => {
+              const response = await axios.delete(
+                `${urlApi}/books/${item.id}`,
+                {
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                },
+              );
 
-      const {data} = response;
-      setBooksList(booksList.filter(book => book.id !== item.id));
-      console.log('🚀 ~ handleDeleteBook ~ data:', data);
+              const {data} = response;
+              setBooksList(booksList.filter(book => book.id !== item.id));
+              console.log('🚀 ~ handleDeleteBook ~ data:', data);
+            },
+          },
+        ],
+        {cancelable: false},
+      );
     } catch (error) {
       console.error(error);
     }
@@ -191,6 +211,7 @@ function App(): React.JSX.Element {
           bookName: payloadBook.bookName,
           author: payloadBook.author,
           publisher: payloadBook.publisher,
+          description: payloadBook.description,
         },
         {
           headers: {
@@ -209,18 +230,32 @@ function App(): React.JSX.Element {
                   bookName: data.bookName,
                   author: data.author,
                   publisher: data.publisher,
+                  description: data.description,
                 }
               : book,
           ),
         );
+        setAddBookProcess({
+          process: false,
+          item: null,
+        });
       }
-      setAddBookProcess({
-        process: false,
-        item: null,
-      });
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const handleOpenFormAddBook = () => {
+    setAddBookProcess({
+      process: true,
+      item: null,
+    });
+    setPayloadBook({
+      bookName: '',
+      author: '',
+      publisher: '',
+      description: '',
+    });
   };
 
   return (
@@ -251,10 +286,7 @@ function App(): React.JSX.Element {
           }}
           onPress={() => {
             if (!addBookProcess.process && !addBookProcess.item) {
-              setAddBookProcess({
-                process: true,
-                item: null,
-              });
+              handleOpenFormAddBook();
             } else if (addBookProcess.process && !addBookProcess.item) {
               handleAddBook();
             } else if (addBookProcess.process && addBookProcess.item) {
@@ -293,6 +325,20 @@ function App(): React.JSX.Element {
               Cancelar
             </Text>
           </TouchableOpacity>
+        )}
+
+        {booksList.length === 0 && (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              margin: 10,
+            }}>
+            <Text style={{textAlign: 'center', fontSize: 20}}>
+              No hay libros registrados
+            </Text>
+          </View>
         )}
 
         <FlatList
